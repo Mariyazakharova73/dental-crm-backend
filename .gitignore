@@ -1,9 +1,11 @@
 # Dependencies
 node_modules/
+src/generated/prisma/
 
 # Build output
 dist/
 build/
+*.tsbuildinfo
 
 # Test and coverage output
 coverage/
@@ -34,3 +36,5 @@ desktop.ini
 # Temporary files
 tmp/
 temp/
+
+AGENTS.md
