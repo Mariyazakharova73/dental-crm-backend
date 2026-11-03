@@ -2,10 +2,24 @@ import { Injectable } from '@nestjs/common';
 import type { Patient } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import type { GetPatientsQueryDto } from './dto/get-patients-query.dto';
+import type { CreatePatientDto } from './dto/create-patient.dto';
 
 @Injectable()
 export class PatientsService {
   constructor(private readonly prisma: PrismaService) {}
+
+  create(data: CreatePatientDto): Promise<Patient> {
+    return this.prisma.patient.create({
+      data: {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phone: data.phone,
+        birthDate: data.birthDate,
+        email: data.email,
+        comment: data.comment,
+      },
+    });
+  }
 
   async findAll(
     query: GetPatientsQueryDto,
