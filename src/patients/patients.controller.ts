@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Post,
   Query,
   Res,
@@ -10,12 +11,21 @@ import {
 import type { Response } from 'express';
 import type { Patient } from '../generated/prisma/client';
 import { CreatePatientDto } from './dto/create-patient.dto';
+import { GetPatientParamsDto } from './dto/get-patient-params.dto';
 import { GetPatientsQueryDto } from './dto/get-patients-query.dto';
 import { PatientsService } from './patients.service';
 
 @Controller('patients')
 export class PatientsController {
   constructor(private readonly patientsService: PatientsService) {}
+
+  @Get(':id')
+  findOne(
+    @Param(new ValidationPipe({ transform: true, whitelist: true }))
+    params: GetPatientParamsDto,
+  ): Promise<Patient> {
+    return this.patientsService.findOne(params.id);
+  }
 
   @Post()
   create(

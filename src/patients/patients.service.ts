@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Patient } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import type { GetPatientsQueryDto } from './dto/get-patients-query.dto';
@@ -7,6 +7,14 @@ import type { CreatePatientDto } from './dto/create-patient.dto';
 @Injectable()
 export class PatientsService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async findOne(id: number): Promise<Patient> {
+    const patient = await this.prisma.patient.findUnique({ where: { id } });
+    if (!patient) {
+      throw new NotFoundException('Patient not found');
+    }
+    return patient;
+  }
 
   create(data: CreatePatientDto): Promise<Patient> {
     return this.prisma.patient.create({
