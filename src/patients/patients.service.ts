@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Patient } from '../generated/prisma/client';
+import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import type { GetPatientsQueryDto } from './dto/get-patients-query.dto';
 import type { CreatePatientDto } from './dto/create-patient.dto';
@@ -27,6 +28,44 @@ export class PatientsService {
         comment: data.comment,
       },
     });
+  }
+
+  async update(id: number, data: CreatePatientDto): Promise<Patient> {
+    try {
+      return await this.prisma.patient.update({
+        where: { id },
+        data: {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          phone: data.phone,
+          birthDate: data.birthDate,
+          email: data.email,
+          comment: data.comment,
+        },
+      });
+    } catch (error: unknown) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException('Patient not found');
+      }
+      throw error;
+    }
+  }
+
+  async remove(id: number): Promise<void> {
+    try {
+      await this.prisma.patient.delete({ where: { id } });
+    } catch (error: unknown) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException('Patient not found');
+      }
+      throw error;
+    }
   }
 
   async findAll(

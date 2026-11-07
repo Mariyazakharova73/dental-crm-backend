@@ -1,9 +1,13 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Post,
+  Put,
   Query,
   Res,
   ValidationPipe,
@@ -33,6 +37,25 @@ export class PatientsController {
     data: CreatePatientDto,
   ): Promise<Patient> {
     return this.patientsService.create(data);
+  }
+
+  @Put(':id')
+  update(
+    @Param(new ValidationPipe({ transform: true, whitelist: true }))
+    params: GetPatientParamsDto,
+    @Body(new ValidationPipe({ transform: true, whitelist: true }))
+    data: CreatePatientDto,
+  ): Promise<Patient> {
+    return this.patientsService.update(params.id, data);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(
+    @Param(new ValidationPipe({ transform: true, whitelist: true }))
+    params: GetPatientParamsDto,
+  ): Promise<void> {
+    return this.patientsService.remove(params.id);
   }
 
   @Get()
