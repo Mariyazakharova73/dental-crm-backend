@@ -71,14 +71,44 @@ export class PatientsService {
   async findAll(
     query: GetPatientsQueryDto,
   ): Promise<{ patients: Patient[]; total: number }> {
-    const [patients, total] = await Promise.all([
-      this.prisma.patient.findMany({
-        orderBy: { id: 'asc' },
-        skip: (query._page - 1) * query._limit,
-        take: query._limit,
-      }),
-      this.prisma.patient.count(),
+    const columns: Record<string, Prisma.Sql> = {
+      id: Prisma.sql`"id"`,
+      firstName: Prisma.sql`"firstName"`,
+      lastName: Prisma.sql`"lastName"`,
+      phone: Prisma.sql`"phone"`,
+      birthDate: Prisma.sql`"birthDate"`,
+      email: Prisma.sql`"email"`,
+      comment: Prisma.sql`"comment"`,
+    };
+    const conditions: Prisma.Sql[] = [];
+    const search = query.q?.trim();
+    if (search) {
+      
+      const pattern = `%${search.replace(/[\\%_]/g, '\\$&')}%`;
+      conditions.push(
+        Prisma.sql`concat_ws(' ', "firstName", "lastName", "phone", "email", "comment") ILIKE ${pattern}`,
+      );
+    }
+    if (query.commentFilter !== 'all') {
+      const empty = query.commentFilter === 'without_comment';
+      conditions.push(Prisma.sql`("comment" ~ '[^[:space:]]') = ${!empty}`);
+    }
+    const where = conditions.length
+      ? Prisma.sql`WHERE ${Prisma.join(conditions, ' AND ')}`
+      : Prisma.empty;
+    const direction =
+      query._order === 'desc' ? Prisma.sql`DESC` : Prisma.sql`ASC`;
+    const column = columns[query._sort] ?? columns.id;
+    const [patients, counts] = await Promise.all([
+      this.prisma.$queryRaw<Patient[]>(Prisma.sql`
+        SELECT * FROM "Patient" ${where}
+        ORDER BY ${column} ${direction}, "id" ASC
+        LIMIT ${query._limit} OFFSET ${(query._page - 1) * query._limit}
+      `),
+      this.prisma.$queryRaw<{ total: number }[]>(Prisma.sql`
+        SELECT COUNT(*)::int AS total FROM "Patient" ${where}
+      `),
     ]);
-    return { patients, total };
+    return { patients, total: counts[0].total };
   }
 }
